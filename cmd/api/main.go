@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"go_web_api/internal/app"
+)
 
 func main() {
-    fmt.Println("API Iniciando...")
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
