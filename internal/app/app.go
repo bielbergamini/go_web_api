@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"net/http"
 
+	"go_web_api/internal/config"
 	apihttp "go_web_api/internal/infrastructure/http"
 )
 
 func Run() error {
+	cfg := config.Load()
+
 	router := apihttp.NewRouter()
 
-	fmt.Println("Servidor running on http://localhost:8080")
-	return http.ListenAndServe(":8080", router)
+	addr := ":" + cfg.ServerPort
+
+	fmt.Printf("Server running on http://localhost%s\n", addr)
+
+	return http.ListenAndServe(addr, router)
 }
