@@ -17,10 +17,9 @@ func Run() error {
 	if err != nil {
 		log.Fatal("Failed to connect to database: ", err)
 	}
+	defer database.Close()
 
-	_ = database 
-
-	router := apihttp.NewRouter()
+	router := apihttp.NewRouter(database)
 
 	addr := ":" + cfg.ServerPort
 	fmt.Printf("Server running at http://localhost%s\n", addr)
