@@ -6,8 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"go_web_api/internal/domain/user"
 )
 
@@ -19,24 +17,17 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{DB: db}
 }
 
-var _ user.Repository = (*UserRepository)(nil)
-
 func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-
-	query := `
-		INSERT INTO users (name, email, password, created_at)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id
+		query := `
+			INSERT INTO users (name, email, password, created_at)
+			VALUES ($1, $2, $3, $4)
+			RETURNING id
 	`
 
-	err = r.DB.QueryRowContext(ctx, query,
+	err := r.DB.QueryRowContext(ctx, query,
 		u.Name,
 		u.Email,
-		string(hashedPassword),
+		u.Password, // Agora a senha já vem pronta (criptografada)
 		time.Now(),
 	).Scan(&u.ID)
 
@@ -45,8 +36,7 @@ func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
 	}
 
 	return nil
-}
-
+    }
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
 	query := `
 		SELECT id, name, email, password, created_at
@@ -88,3 +78,5 @@ func (r *UserRepository) FindByID(ctx context.Context, id int64) (*user.User, er
 
 	return &u, nil
 }
+
+var _ user.Repository = (*UserRepository)(nil)

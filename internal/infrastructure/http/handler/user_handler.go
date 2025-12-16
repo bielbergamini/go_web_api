@@ -11,18 +11,15 @@ import (
 	"go_web_api/internal/infrastructure/db"
 )
 
-// UserHandler manages HTTP requests related to users
 type UserHandler struct {
 	service *user.Service
 }
 
-// NewUserHandler creates a handler with an injected service
 func NewUserHandler(repo *db.UserRepository) *UserHandler {
-	svc := user.NewService(repo)
-	return &UserHandler{service: svc}
+	service := user.NewService(repo)
+	return &UserHandler{service: service}
 }
 
-// CreateUser handles POST /users
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -35,7 +32,8 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
@@ -48,7 +46,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	err := h.service.CreateUser(ctx, u)
+	err = h.service.CreateUser(ctx, u)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidEmail, user.ErrInvalidPassword:
@@ -71,7 +69,6 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetUser handles GET /users/:id
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
