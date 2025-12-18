@@ -3,7 +3,8 @@ package user
 import "errors"
 
 var (
-	ErrInvalidEmail    = errors.New("invalid email address")
-	ErrInvalidPassword = errors.New("password must be at least 6 characters")
-	ErrEmailAlreadyUsed = errors.New("email is already in use")
+	ErrInvalidEmail     = errors.New("invalid email")
+	ErrInvalidPassword  = errors.New("invalid password, must be at least 6 characters")
+	ErrEmailAlreadyUsed = errors.New("email already used")
+	ErrNotFound         = errors.New("user not found")
 )

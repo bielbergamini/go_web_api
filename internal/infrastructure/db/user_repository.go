@@ -80,3 +80,19 @@ func (r *UserRepository) FindByID(ctx context.Context, id int64) (*user.User, er
 }
 
 var _ user.Repository = (*UserRepository)(nil)
+
+func (r *UserRepository) Update(ctx context.Context, u *user.User) error {
+	query := `
+		UPDATE users
+		SET name = $1, email = $2
+		WHERE id = $3
+	`
+
+	_, err := r.DB.ExecContext(ctx, query, u.Name, u.Email, u.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+

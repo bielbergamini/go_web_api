@@ -19,7 +19,7 @@ func NewRouter(database *sql.DB) *http.ServeMux {
 	userHandler := handler.NewUserHandler(repo)
 
 	mux.HandleFunc("/users", userHandler.CreateUser)
-	mux.HandleFunc("/users/", userHandler.GetUser)
+	mux.HandleFunc("/users/", userHandler.ServeMux)
 
 	return mux
 }

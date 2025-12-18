@@ -70,11 +70,6 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	// Extract user ID from URL path
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 3 {
@@ -106,3 +101,63 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		"created_at": u.CreatedAt,
 	})
 }
+
+func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 3 {
+		writeError(w, http.StatusBadRequest, "invalid URL format")
+		return
+	}
+
+	id, err := strconv.ParseInt(parts[2], 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+
+	var input struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	defer r.Body.Close()
+
+	u := &user.User{
+		ID:    id,
+		Name:  input.Name,
+		Email: input.Email,
+	}
+
+	ctx := context.Background()
+	err = h.service.UpdateUser(ctx, u)
+	if err != nil {
+		switch err {
+		case user.ErrNotFound:
+			writeError(w, http.StatusNotFound, err.Error())
+		default:
+			writeError(w, http.StatusInternalServerError, "internal server error")
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"status": "success",
+	})
+}
+
+func (h *UserHandler) ServeMux(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		h.GetUser(w, r)
+	case http.MethodPut:
+		h.UpdateUser(w, r)
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
