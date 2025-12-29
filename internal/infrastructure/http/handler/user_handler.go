@@ -150,12 +150,44 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 3 {
+		writeError(w, http.StatusBadRequest, "invalid URL format")
+		return
+	}
+
+	id, err := strconv.ParseInt(parts[2], 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user ID")
+		return
+	}
+
+	ctx := context.Background()
+	err = h.service.DeleteUser(ctx, id)
+	if err != nil {
+		switch err {
+		case user.ErrNotFound:
+			writeError(w, http.StatusNotFound, err.Error())
+		default:
+			writeError(w, http.StatusInternalServerError, "internal server error")
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"status": "success",
+	})
+}
+
 func (h *UserHandler) ServeMux(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		h.GetUser(w, r)
 	case http.MethodPut:
 		h.UpdateUser(w, r)
+	case http.MethodDelete:
+		h.DeleteUser(w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

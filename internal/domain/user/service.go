@@ -45,3 +45,7 @@ func (s *Service) GetUserByID(ctx context.Context, id int64) (*User, error) {
 func (s *Service) UpdateUser(ctx context.Context, u *User) error {
 	return s.repo.Update(ctx, u)
 }
+
+func (s *Service) DeleteUser(ctx context.Context, id int64) error {
+	return s.repo.Delete(ctx, id)
+}

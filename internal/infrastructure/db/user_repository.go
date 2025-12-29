@@ -96,3 +96,26 @@ func (r *UserRepository) Update(ctx context.Context, u *user.User) error {
 	return nil
 }
 
+func (r *UserRepository) Delete(ctx context.Context, id int64) error {
+	query := `
+		DELETE FROM users
+		WHERE id = $1
+	`
+
+	result, err := r.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return user.ErrNotFound
+	}
+
+	return nil
+}
+
