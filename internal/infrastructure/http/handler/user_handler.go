@@ -3,22 +3,26 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"go_web_api/internal/auth"
+	"go_web_api/internal/domain/user"
+	"go_web_api/internal/infrastructure/db"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"go_web_api/internal/auth"
-	"go_web_api/internal/domain/user"
-	"go_web_api/internal/infrastructure/db"
 )
 
 type UserHandler struct {
-	service *user.Service
+	service       *user.Service
+	authenticator *auth.Auth
 }
 
-func NewUserHandler(repo *db.UserRepository) *UserHandler {
+func NewUserHandler(repo *db.UserRepository, authenticator *auth.Auth) *UserHandler {
 	service := user.NewService(repo)
-	return &UserHandler{service: service}
+	return &UserHandler{
+		service:       service,
+		authenticator: authenticator,
+	}
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +186,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.GenerateToken(u)
+	token, err := h.authenticator.GenerateToken(u)
 	if err != nil {
 		writeError(w, r, http.StatusInternalServerError, "failed to generate token")
 		return

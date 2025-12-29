@@ -10,14 +10,20 @@ import (
 	"go_web_api/internal/domain/user"
 )
 
-var jwtKey = []byte("my_secret_key") // TODO: move to config
+type Auth struct {
+	jwtKey []byte
+}
+
+func New(jwtSecret string) *Auth {
+	return &Auth{jwtKey: []byte(jwtSecret)}
+}
 
 type Claims struct {
 	UserID int64 `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(u *user.User) (string, error) {
+func (a *Auth) GenerateToken(u *user.User) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: u.ID,
@@ -27,10 +33,10 @@ func GenerateToken(u *user.User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
+	return token.SignedString(a.jwtKey)
 }
 
-func Middleware(next http.Handler) http.Handler {
+func (a *Auth) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -42,7 +48,7 @@ func Middleware(next http.Handler) http.Handler {
 		claims := &Claims{}
 
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return a.jwtKey, nil
 		})
 
 		if err != nil {

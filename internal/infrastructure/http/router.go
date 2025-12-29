@@ -2,6 +2,7 @@ package http
 
 import (
 	"database/sql"
+	"go_web_api/internal/config"
 	"net/http"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 	"go_web_api/internal/infrastructure/http/handler"
 )
 
-func NewRouter(database *sql.DB) http.Handler {
+func NewRouter(database *sql.DB, cfg config.Config) http.Handler {
 	mux := chi.NewRouter()
 
 	mux.Use(hlog.NewHandler(log.Logger))
@@ -29,8 +30,10 @@ func NewRouter(database *sql.DB) http.Handler {
 	}))
 	mux.Use(middleware.Recoverer)
 
+	authenticator := auth.New(cfg.JWTSecret)
+
 	repo := db.NewUserRepository(database)
-	userHandler := handler.NewUserHandler(repo)
+	userHandler := handler.NewUserHandler(repo, authenticator)
 
 	// Public routes
 	mux.Get("/status", func(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +44,7 @@ func NewRouter(database *sql.DB) http.Handler {
 
 	// Protected routes
 	mux.Group(func(r chi.Router) {
-		r.Use(auth.Middleware)
+		r.Use(authenticator.Middleware)
 		r.Get("/users/{id}", userHandler.GetUser)
 		r.Put("/users/{id}", userHandler.UpdateUser)
 		r.Delete("/users/{id}", userHandler.DeleteUser)

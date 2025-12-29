@@ -19,7 +19,7 @@ func Run() error {
 	}
 	defer database.Close()
 
-	router := apihttp.NewRouter(database)
+	router := apihttp.NewRouter(database, cfg)
 
 	addr := ":" + cfg.ServerPort
 	log.Info().Msgf("Server running at http://localhost%s", addr)
