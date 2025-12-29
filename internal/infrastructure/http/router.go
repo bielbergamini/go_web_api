@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
+	"go_web_api/internal/auth"
 	"go_web_api/internal/infrastructure/db"
 	"go_web_api/internal/infrastructure/http/handler"
 )
@@ -28,18 +29,22 @@ func NewRouter(database *sql.DB) http.Handler {
 	}))
 	mux.Use(middleware.Recoverer)
 
-	mux.Get("/status", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("API is running"))
-	})
-
 	repo := db.NewUserRepository(database)
 	userHandler := handler.NewUserHandler(repo)
 
-	mux.Route("/users", func(r chi.Router) {
-		r.Post("/", userHandler.CreateUser)
-		r.Get("/{id}", userHandler.GetUser)
-		r.Put("/{id}", userHandler.UpdateUser)
-		r.Delete("/{id}", userHandler.DeleteUser)
+	// Public routes
+	mux.Get("/status", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("API is running"))
+	})
+	mux.Post("/login", userHandler.Login)
+	mux.Post("/users", userHandler.CreateUser)
+
+	// Protected routes
+	mux.Group(func(r chi.Router) {
+		r.Use(auth.Middleware)
+		r.Get("/users/{id}", userHandler.GetUser)
+		r.Put("/users/{id}", userHandler.UpdateUser)
+		r.Delete("/users/{id}", userHandler.DeleteUser)
 	})
 
 	return mux

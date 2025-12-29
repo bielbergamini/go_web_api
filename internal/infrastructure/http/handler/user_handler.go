@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"go_web_api/internal/auth"
 	"go_web_api/internal/domain/user"
 	"go_web_api/internal/infrastructure/db"
 )
@@ -155,5 +156,40 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		writeError(w, r, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	defer r.Body.Close()
+
+	u, err := h.service.Login(context.Background(), input.Email, input.Password)
+	if err != nil {
+		switch err {
+		case user.ErrInvalidCredentials:
+			writeError(w, r, http.StatusUnauthorized, err.Error())
+		default:
+			writeError(w, r, http.StatusInternalServerError, "internal server error")
+		}
+		return
+	}
+
+	token, err := auth.GenerateToken(u)
+	if err != nil {
+		writeError(w, r, http.StatusInternalServerError, "failed to generate token")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"token": token,
+	})
 }
 

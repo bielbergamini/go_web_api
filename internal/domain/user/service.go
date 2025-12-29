@@ -49,3 +49,20 @@ func (s *Service) UpdateUser(ctx context.Context, u *User) error {
 func (s *Service) DeleteUser(ctx context.Context, id int64) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func (s *Service) Login(ctx context.Context, email, password string) (*User, error) {
+	user, err := s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	return user, nil
+}
