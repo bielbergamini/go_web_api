@@ -29,7 +29,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, r, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	defer r.Body.Close()
@@ -45,11 +45,11 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case user.ErrInvalidEmail, user.ErrInvalidPassword:
-			writeError(w, http.StatusBadRequest, err.Error())
+			writeError(w, r, http.StatusBadRequest, err.Error())
 		case user.ErrEmailAlreadyUsed:
-			writeError(w, http.StatusConflict, err.Error())
+			writeError(w, r, http.StatusConflict, err.Error())
 		default:
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			writeError(w, r, http.StatusInternalServerError, "internal server error")
 		}
 		return
 	}
@@ -68,18 +68,18 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user ID")
+		writeError(w, r, http.StatusBadRequest, "invalid user ID")
 		return
 	}
 
 	ctx := context.Background()
 	u, err := h.service.GetUserByID(ctx, id)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "database error")
+		writeError(w, r, http.StatusInternalServerError, "database error")
 		return
 	}
 	if u == nil {
-		writeError(w, http.StatusNotFound, "user not found")
+		writeError(w, r, http.StatusNotFound, "user not found")
 		return
 	}
 
@@ -95,7 +95,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user ID")
+		writeError(w, r, http.StatusBadRequest, "invalid user ID")
 		return
 	}
 
@@ -106,7 +106,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, r, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	defer r.Body.Close()
@@ -122,9 +122,9 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case user.ErrNotFound:
-			writeError(w, http.StatusNotFound, err.Error())
+			writeError(w, r, http.StatusNotFound, err.Error())
 		default:
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			writeError(w, r, http.StatusInternalServerError, "internal server error")
 		}
 		return
 	}
@@ -138,7 +138,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user ID")
+		writeError(w, r, http.StatusBadRequest, "invalid user ID")
 		return
 	}
 
@@ -147,9 +147,9 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err {
 		case user.ErrNotFound:
-			writeError(w, http.StatusNotFound, err.Error())
+			writeError(w, r, http.StatusNotFound, err.Error())
 		default:
-			writeError(w, http.StatusInternalServerError, "internal server error")
+			writeError(w, r, http.StatusInternalServerError, "internal server error")
 		}
 		return
 	}

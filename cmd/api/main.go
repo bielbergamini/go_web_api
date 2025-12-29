@@ -1,13 +1,15 @@
 package main
 
 import (
-	"log"
-
 	"go_web_api/internal/app"
+	"go_web_api/internal/logger"
+
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
+	logger.Initialize()
 	if err := app.Run(); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("Failed to run app")
 	}
 }
