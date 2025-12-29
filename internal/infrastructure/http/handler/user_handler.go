@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"go_web_api/internal/domain/user"
 	"go_web_api/internal/infrastructure/db"
 )
@@ -21,11 +21,6 @@ func NewUserHandler(repo *db.UserRepository) *UserHandler {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	var input struct {
 		Name     string `json:"name"`
 		Email    string `json:"email"`
@@ -70,14 +65,8 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	// Extract user ID from URL path
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 {
-		writeError(w, http.StatusBadRequest, "invalid URL format")
-		return
-	}
-
-	id, err := strconv.ParseInt(parts[2], 10, 64)
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user ID")
 		return
@@ -103,13 +92,8 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 {
-		writeError(w, http.StatusBadRequest, "invalid URL format")
-		return
-	}
-
-	id, err := strconv.ParseInt(parts[2], 10, 64)
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user ID")
 		return
@@ -151,13 +135,8 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 {
-		writeError(w, http.StatusBadRequest, "invalid URL format")
-		return
-	}
-
-	id, err := strconv.ParseInt(parts[2], 10, 64)
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user ID")
 		return
@@ -175,21 +154,6 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"status": "success",
-	})
-}
-
-func (h *UserHandler) ServeMux(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		h.GetUser(w, r)
-	case http.MethodPut:
-		h.UpdateUser(w, r)
-	case http.MethodDelete:
-		h.DeleteUser(w, r)
-	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
